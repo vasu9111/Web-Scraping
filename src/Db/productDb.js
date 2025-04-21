@@ -12,7 +12,12 @@ const find = async (limit, sortBy, type) => {
   return result;
 };
 
+const findById = async (id) => {
+  const result = await ProductMdl.findById(id);
+  return result;
+};
 export default {
   create,
   find,
+  findById,
 };
