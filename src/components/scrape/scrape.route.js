@@ -10,5 +10,5 @@ router.post(
   middleware.validate(validation.searchSchema),
   scrapeProducts.searchProducts
 );
-
+router.get("/products", scrapeProducts.getProducts);
 export default router;
