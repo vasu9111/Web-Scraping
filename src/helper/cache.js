@@ -6,4 +6,8 @@ const setCache = async (key, value, expiryInSeconds = 3600) => {
   });
 };
 
-export { setCache };
+const getCache = async (key) => {
+  const data = await redisClient.get(key);
+  return data ? JSON.parse(data) : null;
+};
+export { setCache, getCache };

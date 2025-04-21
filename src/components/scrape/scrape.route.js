@@ -11,4 +11,5 @@ router.post(
   scrapeProducts.searchProducts
 );
 router.get("/products", scrapeProducts.getProducts);
+router.get("/products/:id", scrapeProducts.getProductById);
 export default router;
