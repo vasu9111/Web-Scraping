@@ -1,6 +1,7 @@
 import productDb from "../../Db/productDb.js";
 import searchAmazon from "../../scrapers/amazonScraper.js";
 import searchFlipkart from "../../scrapers/flipkartScraper.js";
+import { setCache } from "../../helper/cache.js";
 
 const searchProducts = async (keyword) => {
   try {
@@ -40,4 +41,18 @@ const searchProducts = async (keyword) => {
   }
 };
 
-export default { searchProducts };
+const getProducts = async (limit, sortBy, type) => {
+  try {
+    const products = await productDb.find(limit, sortBy, type);
+    products.map(async (product) => {
+      const cacheKey = `products:${product._id}`;
+      await setCache(cacheKey, product);
+    });
+    return products;
+  } catch (err) {
+    console.error("Error in getProducts:", err);
+    throw err;
+  }
+};
+
+export default { searchProducts, getProducts };

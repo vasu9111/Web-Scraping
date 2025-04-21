@@ -16,6 +16,19 @@ const searchProducts = async (req, res, next) => {
   }
 };
 
+const getProducts = async (req, res, next) => {
+  try {
+    const { limit, sort, type } = req.query;
+    const products = await service.getProducts(limit, sort, type);
+    res.json({
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   searchProducts,
+  getProducts,
 };
