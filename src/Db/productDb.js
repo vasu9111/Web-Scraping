@@ -1,4 +1,5 @@
 import ProductMdl from "../models/Product.js";
+import PriceHistoryMdl from "../models/priceHistory.js";
 
 const create = async (product) => {
   const result = await ProductMdl.create(product);
@@ -16,8 +17,14 @@ const findById = async (id) => {
   const result = await ProductMdl.findById(id);
   return result;
 };
+const PriceHistoryfind = async (productId) => {
+  const result = await PriceHistoryMdl.find(productId).sort({ timestamp: -1 });
+  return result;
+};
+
 export default {
   create,
   find,
   findById,
+  PriceHistoryfind,
 };

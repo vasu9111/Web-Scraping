@@ -41,8 +41,18 @@ const getProductById = async (req, res, next) => {
   }
 };
 
+const getPriceHistory = async (req, res, next) => {
+  try {
+    const productId = req.params.id;
+    const history = await service.getPriceHistory(productId);
+    res.json(history);
+  } catch (error) {
+    next(error);
+  }
+};
 export default {
   searchProducts,
   getProducts,
   getProductById,
+  getPriceHistory,
 };
