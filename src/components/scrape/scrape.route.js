@@ -12,4 +12,5 @@ router.post(
 );
 router.get("/products", scrapeProducts.getProducts);
 router.get("/products/:id", scrapeProducts.getProductById);
+router.get("/products/:id/history", scrapeProducts.getPriceHistory);
 export default router;

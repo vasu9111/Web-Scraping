@@ -1,7 +1,9 @@
 import productDb from "../../Db/productDb.js";
+import priceHistory from "../../models/priceHistory.js";
 import searchAmazon from "../../scrapers/amazonScraper.js";
 import searchFlipkart from "../../scrapers/flipkartScraper.js";
 import { setCache, getCache } from "../../helper/cache.js";
+import mongoose from "mongoose";
 
 const searchProducts = async (keyword) => {
   try {
@@ -23,7 +25,7 @@ const searchProducts = async (keyword) => {
         default:
           break;
       }
-      await productDb.create({
+      const product = await productDb.create({
         name: result.name,
         price: result.price,
         currency: result.currency,
@@ -32,6 +34,12 @@ const searchProducts = async (keyword) => {
         source: result.source,
         searchTage: keyword,
         firstChecked: result.firstChecked,
+        isAvailable: result.isAvailable,
+      });
+      await priceHistory.create({
+        productId: product._id,
+        price: result.price,
+        currency: result.currency,
       });
     });
     return combinedResults;
@@ -74,4 +82,24 @@ const getProductById = async (id) => {
   }
 };
 
-export default { searchProducts, getProducts, getProductById };
+const getPriceHistory = async (productId) => {
+  try {
+    if (!mongoose.isValidObjectId(productId)) {
+      throw new Error("Invalid product ID");
+    }
+
+    const priceHistory = await productDb.PriceHistoryfind({ productId });
+
+    return priceHistory;
+  } catch (err) {
+    console.error("Failed to fetch price history:", err);
+    throw err;
+  }
+};
+
+export default {
+  searchProducts,
+  getProducts,
+  getProductById,
+  getPriceHistory,
+};
