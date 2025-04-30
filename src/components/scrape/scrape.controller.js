@@ -50,9 +50,18 @@ const getPriceHistory = async (req, res, next) => {
     next(error);
   }
 };
+const refreshProductPrice = async (req, res,next) => {
+  try {
+    const response = await service.refreshPrice(req.params.id);
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
 export default {
   searchProducts,
   getProducts,
   getProductById,
   getPriceHistory,
+  refreshProductPrice
 };

@@ -36,12 +36,20 @@ async function searchAmazon(keyword) {
           //  product URL
           const productUrlElement = item.querySelector("a.a-link-normal");
 
+          // return {
+          //   name: titleElement.textContent.trim(),
+          //   price: priceElement ? priceElement.textContent.trim() : "N/A",
+          //   currency: currencyElement.textContent,
+          //   imageUrl: imageElement ? imageElement.src : "N/A",
+          //   productUrl: productUrlElement.href,
+          //   source: "Amazon.in",
+          // };
           return {
-            name: titleElement.textContent,
-            price: priceElement ? priceElement.textContent.trim() : "N/A",
-            currency: currencyElement.textContent,
-            imageUrl: imageElement ? imageElement.src : "N/A",
-            productUrl: productUrlElement.href,
+            name: titleElement?.textContent?.trim() || "N/A",
+            price: priceElement?.textContent?.trim() || "N/A",
+            currency: currencyElement?.textContent || "₹",
+            imageUrl: imageElement?.src || "N/A",
+            productUrl: productUrlElement?.href || "N/A",
             source: "Amazon.in",
           };
         });
@@ -58,3 +66,7 @@ async function searchAmazon(keyword) {
 }
 
 export default searchAmazon;
+
+
+
+

@@ -1,5 +1,6 @@
 import productDb from "../../Db/productDb.js";
 import priceHistory from "../../models/priceHistory.js";
+import searchQuery from "../../models/searchQuery.js";
 import searchAmazon from "../../scrapers/amazonScraper.js";
 import searchFlipkart from "../../scrapers/flipkartScraper.js";
 import { setCache, getCache } from "../../helper/cache.js";
@@ -42,6 +43,11 @@ const searchProducts = async (keyword) => {
         currency: result.currency,
       });
     });
+    await searchQuery.create({
+      keyword: keyword,
+      resultCount: combinedResults.length,
+      cacheHit: false,
+    });
     return combinedResults;
   } catch (err) {
     console.error("Error in searchProducts:", err);
@@ -52,6 +58,9 @@ const searchProducts = async (keyword) => {
 const getProducts = async (limit, sortBy, type) => {
   try {
     const products = await productDb.find(limit, sortBy, type);
+    if (!products || products.length === 0) {
+      throw new Error("PRODUCTS_NOT_FOUND");
+    }
     products.map(async (product) => {
       const cacheKey = `products:${product._id}`;
       await setCache(cacheKey, product);
@@ -68,12 +77,10 @@ const getProductById = async (id) => {
     let product;
     const cacheKey = `products:${id}`;
     product = await getCache(cacheKey);
-    if (product) {
-      console.log("Return if found in cache");
-      return product;
+    if (!product || product.length === 0) {
+      throw new Error("PRODUCTS_NOT_FOUND");
     } else {
       product = await productDb.findById(id);
-      console.log("Return if found in mongodb");
     }
     return product;
   } catch (err) {
@@ -85,21 +92,70 @@ const getProductById = async (id) => {
 const getPriceHistory = async (productId) => {
   try {
     if (!mongoose.isValidObjectId(productId)) {
-      throw new Error("Invalid product ID");
+      throw new Error("INVALID_PRODUCT_ID");
     }
-
     const priceHistory = await productDb.PriceHistoryfind({ productId });
-
+    if (!priceHistory || priceHistory.length === 0) {
+      throw new Error("PRODUCTS_HISTORY_NOT_FOUND");
+    }
     return priceHistory;
   } catch (err) {
     console.error("Failed to fetch price history:", err);
     throw err;
   }
 };
+const refreshPrice = async (productId) => {
+  try {
+    const product = await productDb.findById(productId);
+    if (!product || product.length === 0) {
+      throw new Error("PRODUCTS_NOT_FOUND");
+    }
 
+    const keyword = product.name;
+    const scraper =
+      product.source === "Amazon.in" ? searchAmazon : searchFlipkart;
+console.log({scraper});
+
+    const results = await scraper(keyword);
+    
+    const refreshed = results.find((item) => item.name === product.name);
+    if (!refreshed || refreshed.length === 0) {
+      throw new Error("REFRESHED_PRODUCT_NOT_FOUND");
+    }
+    switch (refreshed.currency) {
+      case "₹":
+        refreshed.currency = "INR";
+        break;
+      case "$":
+        refreshed.currency = "USD";
+        break;
+      default: 
+        break;
+    }
+    let updated;
+    if (product.price != refreshed.price) {
+      updated = await productDb.update(productId, {
+        price: refreshed.price,
+        currency: refreshed.currency,
+        isAvailable: refreshed.isAvailable ?? true,
+      });       
+    }
+
+    const price = await priceHistory.create({
+      productId,
+      price: refreshed.price,
+      currency: refreshed.currency,
+    });
+    return price;
+  } catch (err) {
+    console.error("Error in refreshPrice:", err);
+    throw err;
+  }
+};
 export default {
   searchProducts,
   getProducts,
   getProductById,
   getPriceHistory,
+  refreshPrice
 };

@@ -22,9 +22,13 @@ const PriceHistoryfind = async (productId) => {
   return result;
 };
 
+const update = async (id, updateData) => {
+  return await ProductMdl.findByIdAndUpdate(id, updateData, { new: true });
+};
 export default {
   create,
   find,
   findById,
   PriceHistoryfind,
+  update,
 };

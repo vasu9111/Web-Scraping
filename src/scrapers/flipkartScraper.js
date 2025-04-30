@@ -9,13 +9,13 @@ async function searchFlipkart(keyword) {
   try {
     const page = await browser.newPage();
     await page.goto(
-      `https://www.flipkart.com/search?q=${encodeURIComponent(keyword)}`
+      `https://www.flipkart.com/search?q=${encodeURIComponent(keyword)}`,{ waitUntil: 'networkidle0' }
     );
 
-    await page.waitForSelector("div[data-id]");
+    await page.waitForSelector("div[data-id]",{ timeout: 10000 });
 
     const products = await page.evaluate(() => {
-      const items = document.querySelectorAll("div[data-id]");
+      const items = document.querySelectorAll("div[data-id],div._1YokD2, div._2kHMtA");
       return Array.from(items)
         .slice(0, 5)
         .map((item) => {
