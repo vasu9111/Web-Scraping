@@ -5,6 +5,7 @@ import searchAmazon from "../../scrapers/amazonScraper.js";
 import searchFlipkart from "../../scrapers/flipkartScraper.js";
 import { setCache, getCache } from "../../helper/cache.js";
 import mongoose from "mongoose";
+import  sendPriceChangeEmail  from "../../services/emailService.js";
 
 const searchProducts = async (keyword) => {
   try {
@@ -139,14 +140,20 @@ console.log({scraper});
         currency: refreshed.currency,
         isAvailable: refreshed.isAvailable ?? true,
       });       
+      await sendPriceChangeEmail(product, product.price, refreshed.price);
     }
-
     const price = await priceHistory.create({
       productId,
       price: refreshed.price,
       currency: refreshed.currency,
     });
-    return price;
+    return {
+      oldPrice: product.price,
+      newPrice: refreshed.price,
+      currency: refreshed.currency,
+      priceHistory: price,
+      updated:updated,
+    };
   } catch (err) {
     console.error("Error in refreshPrice:", err);
     throw err;
