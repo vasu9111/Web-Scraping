@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 
- const sendPriceChangeEmail = async (product, oldPrice, newPrice) => {
+ export const sendPriceChangeEmail = async (product, oldPrice, newPrice) => {
   try {
     const mailOptions = {
       from: 'brandyn.schaden@ethereal.email',
@@ -34,7 +34,3 @@ const transporter = nodemailer.createTransport({
     throw err;
   }
 }; 
-
-export default{
-  sendPriceChangeEmail
-}

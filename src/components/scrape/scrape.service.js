@@ -5,7 +5,7 @@ import searchAmazon from "../../scrapers/amazonScraper.js";
 import searchFlipkart from "../../scrapers/flipkartScraper.js";
 import { setCache, getCache } from "../../helper/cache.js";
 import mongoose from "mongoose";
-import  sendPriceChangeEmail  from "../../services/emailService.js";
+import  {sendPriceChangeEmail}  from "../../services/emailService.js";
 
 const searchProducts = async (keyword) => {
   try {
