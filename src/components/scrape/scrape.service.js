@@ -79,10 +79,11 @@ const getProductById = async (id) => {
     const cacheKey = `products:${id}`;
     product = await getCache(cacheKey);
     if (!product || product.length === 0) {
-      throw new Error("PRODUCTS_NOT_FOUND");
-    } else {
       product = await productDb.findById(id);
     }
+    if (!product) {
+      throw new Error("PRODUCTS_NOT_FOUND");
+    } 
     return product;
   } catch (err) {
     console.error("Error in getProductById:", err);
