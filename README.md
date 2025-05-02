@@ -53,7 +53,7 @@ Search for products for Amazone and Flipkart.
 
 ### Get Products
 ```
-GET /products
+GET /products?limit=10&sort=price&type=1
 ```
 Retrieve a list of all products.
 
