@@ -1,51 +1,62 @@
 import productDb from "../../Db/productDb.js";
-import priceHistory from "../../models/priceHistory.js";
-import searchQuery from "../../models/searchQuery.js";
+import priceHistoryDb from "../../Db/priceHistoryDb.js";
+import searchQueryDb from "../../Db/serchQueryDb.js";
 import searchAmazon from "../../scrapers/amazonScraper.js";
 import searchFlipkart from "../../scrapers/flipkartScraper.js";
 import { setCache, getCache } from "../../helper/cache.js";
 import mongoose from "mongoose";
-import  {sendPriceChangeEmail}  from "../../services/emailService.js";
+import { sendPriceChangeEmail } from "../../services/emailService.js";
+import { common } from "../../common.js";
 
 const searchProducts = async (keyword) => {
   try {
     const [flipkartRsults, amazonResults] = await Promise.all([
-      searchFlipkart(keyword),
-      searchAmazon(keyword),
+      searchFlipkart(keyword, common.source.Flipkart),
+      searchAmazon(keyword, common.source.Amazon),
     ]);
 
     const combinedResults = [...flipkartRsults, ...amazonResults];
 
     combinedResults.map(async (result) => {
       switch (result.currency) {
-        case "₹":
-          result.currency = "INR";
+        case common.CURRENCY_SIMBOL.INR:
+          result.currency = common.CURRENCY.INR;
           break;
-        case "$":
-          result.currency = "USD";
+        case common.CURRENCY_SIMBOL.USD:
+          result.currency = common.CURRENCY.USD;
           break;
         default:
           break;
       }
+      const {
+        name,
+        price,
+        currency,
+        imageUrl,
+        productUrl,
+        source,
+        firstChecked,
+        isAvailable,
+      } = result;
       const product = await productDb.create({
-        name: result.name,
-        price: result.price,
-        currency: result.currency,
-        imageUrl: result.imageUrl,
-        productUrl: result.productUrl,
-        source: result.source,
-        searchTage: keyword,
-        firstChecked: result.firstChecked,
-        isAvailable: result.isAvailable,
+        name,
+        price,
+        currency,
+        imageUrl,
+        productUrl,
+        source,
+        searchTag: keyword,
+        firstChecked,
+        isAvailable,
       });
-      await priceHistory.create({
+      await priceHistoryDb.create({
         productId: product._id,
-        price: result.price,
-        currency: result.currency,
+        price,
+        currency,
       });
     });
-    await searchQuery.create({
-      keyword: keyword,
+    await searchQueryDb.create({
+      keyword,
       resultCount: combinedResults.length,
       cacheHit: false,
     });
@@ -56,9 +67,9 @@ const searchProducts = async (keyword) => {
   }
 };
 
-const getProducts = async (limit, sortBy, type) => {
+const getProducts = async (page, limit, sortBy, sortType) => {
   try {
-    const products = await productDb.find(limit, sortBy, type);
+    const products = await productDb.find(page, limit, sortBy, sortType);
     if (!products || products.length === 0) {
       throw new Error("PRODUCTS_NOT_FOUND");
     }
@@ -83,7 +94,7 @@ const getProductById = async (id) => {
     }
     if (!product) {
       throw new Error("PRODUCTS_NOT_FOUND");
-    } 
+    }
     return product;
   } catch (err) {
     console.error("Error in getProductById:", err);
@@ -96,7 +107,7 @@ const getPriceHistory = async (productId) => {
     if (!mongoose.isValidObjectId(productId)) {
       throw new Error("INVALID_PRODUCT_ID");
     }
-    const priceHistory = await productDb.PriceHistoryfind({ productId });
+    const priceHistory = await priceHistoryDb.PriceHistoryfind({ productId });
     if (!priceHistory || priceHistory.length === 0) {
       throw new Error("PRODUCTS_HISTORY_NOT_FOUND");
     }
@@ -116,44 +127,44 @@ const refreshPrice = async (productId) => {
     const keyword = product.name;
     const scraper =
       product.source === "Amazon.in" ? searchAmazon : searchFlipkart;
-console.log({scraper});
 
     const results = await scraper(keyword);
-    
+
     const refreshed = results.find((item) => item.name === product.name);
     if (!refreshed || refreshed.length === 0) {
       throw new Error("REFRESHED_PRODUCT_NOT_FOUND");
     }
     switch (refreshed.currency) {
-      case "₹":
-        refreshed.currency = "INR";
+      case common.CURRENCY_SIMBOL.INR:
+        refreshed.currency = common.CURRENCY.INR;
         break;
-      case "$":
-        refreshed.currency = "USD";
+      case common.CURRENCY_SIMBOL.USD:
+        refreshed.currency = common.CURRENCY.USD;
         break;
-      default: 
+      default:
         break;
     }
+    const { price = refreshPrice, isAvailable = true, currency } = refreshed;
     let updated;
     if (product.price != refreshed.price) {
       updated = await productDb.update(productId, {
-        price: refreshed.price,
-        currency: refreshed.currency,
-        isAvailable: refreshed.isAvailable ?? true,
-      });       
+        price,
+        currency,
+        isAvailable,
+      });
       await sendPriceChangeEmail(product, product.price, refreshed.price);
     }
-    const price = await priceHistory.create({
+    const priceHistory = await priceHistoryDb.create({
       productId,
-      price: refreshed.price,
-      currency: refreshed.currency,
+      price,
+      currency,
     });
     return {
       oldPrice: product.price,
-      newPrice: refreshed.price,
-      currency: refreshed.currency,
-      priceHistory: price,
-      updated:updated,
+      newPrice: price,
+      currency,
+      priceHistory,
+      updated,
     };
   } catch (err) {
     console.error("Error in refreshPrice:", err);
@@ -165,5 +176,5 @@ export default {
   getProducts,
   getProductById,
   getPriceHistory,
-  refreshPrice
+  refreshPrice,
 };

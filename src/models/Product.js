@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import { common } from "../common.js";
 const ProductSchema = new mongoose.Schema(
   {
     name: {
@@ -7,7 +7,7 @@ const ProductSchema = new mongoose.Schema(
       required: true,
     },
     price: {
-      type: String,
+      type: Number,
       required: true,
     },
     currency: {
@@ -25,9 +25,9 @@ const ProductSchema = new mongoose.Schema(
     source: {
       type: String,
       required: true,
-      enum: ["Amazon.in", "Flipkart.com"],
+      enum: [common.source.Amazon, common.source.Flipkart],
     },
-    searchTage: {
+    searchTag: {
       type: Array,
       required: true,
     },

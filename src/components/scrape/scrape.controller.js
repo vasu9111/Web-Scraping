@@ -3,9 +3,6 @@ import service from "./scrape.service.js";
 const searchProducts = async (req, res, next) => {
   try {
     const { keyword } = req.body;
-    if (!keyword) {
-      return res.status(400).json({ error: "Keyword is required" });
-    }
     const results = await service.searchProducts(keyword);
     res.json({
       keyword,
@@ -18,8 +15,9 @@ const searchProducts = async (req, res, next) => {
 
 const getProducts = async (req, res, next) => {
   try {
-    const { limit, sort, type } = req.query;
-    const products = await service.getProducts(limit, sort, type);
+    let { page, limit, sort, sortType } = req.query;
+    sortType = Number(sortType);
+    const products = await service.getProducts(page, limit, sort, sortType);
     res.json({
       products,
     });
@@ -50,7 +48,7 @@ const getPriceHistory = async (req, res, next) => {
     next(error);
   }
 };
-const refreshProductPrice = async (req, res,next) => {
+const refreshProductPrice = async (req, res, next) => {
   try {
     const response = await service.refreshPrice(req.params.id);
     res.json(response);
@@ -63,5 +61,5 @@ export default {
   getProducts,
   getProductById,
   getPriceHistory,
-  refreshProductPrice
+  refreshProductPrice,
 };

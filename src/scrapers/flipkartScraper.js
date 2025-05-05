@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer";
 
-async function searchFlipkart(keyword) {
+async function searchFlipkart(keyword, source) {
   const browser = await puppeteer.launch({
     headless: "new",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -9,13 +9,16 @@ async function searchFlipkart(keyword) {
   try {
     const page = await browser.newPage();
     await page.goto(
-      `https://www.flipkart.com/search?q=${encodeURIComponent(keyword)}`,{ waitUntil: 'networkidle0' }
+      `https://www.flipkart.com/search?q=${encodeURIComponent(keyword)}`,
+      { waitUntil: "networkidle0" }
     );
 
-    await page.waitForSelector("div[data-id]",{ timeout: 10000 });
+    await page.waitForSelector("div[data-id]", { timeout: 10000 });
 
-    const products = await page.evaluate(() => {
-      const items = document.querySelectorAll("div[data-id],div._1YokD2, div._2kHMtA");
+    const products = await page.evaluate((source) => {
+      const items = document.querySelectorAll(
+        "div[data-id],div._1YokD2, div._2kHMtA"
+      );
       return Array.from(items)
         .slice(0, 5)
         .map((item) => {
@@ -25,7 +28,9 @@ async function searchFlipkart(keyword) {
           //  product price
           const priceElement = item.querySelector("div.Nx9bqj._4b5DiR");
           const priceText = priceElement.textContent;
-          const price = priceText.split("").slice(1).join("");
+          const price = parseFloat(
+            priceText.split("").slice(1).join("").replace(/,/g, "")
+          );
 
           const currencyElement = priceElement.textContent.split("")[0];
 
@@ -41,10 +46,10 @@ async function searchFlipkart(keyword) {
             currency: currencyElement,
             imageUrl: imageElement ? imageElement.src : "N/A",
             productUrl: productUrlElement.href,
-            source: "Flipkart.com",
+            source: source,
           };
         });
-    });
+    }, source);
     // console.log({ products });
 
     return products;

@@ -1,21 +1,20 @@
-import nodemailer from 'nodemailer';
-
+import nodemailer from "nodemailer";
+import config from "../config/config.js";
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.ethereal.email',
-  port: 587,
+  host: config.email.host,
+  port: config.email.port,
   auth: {
-      user: 'brandyn.schaden@ethereal.email',
-      pass: 'fyF8XPPyG76WjHSCCA'
-  }
+    user: config.email.user,
+    pass: config.email.pass,
+  },
 });
 
-
- export const sendPriceChangeEmail = async (product, oldPrice, newPrice) => {
+export const sendPriceChangeEmail = async (product, oldPrice, newPrice) => {
   try {
     const mailOptions = {
-      from: 'brandyn.schaden@ethereal.email',
-      to: 'vasu@gmail.com', 
+      from: config.email.from,
+      to: config.email.to,
       subject: `Price Change Alert: ${product.name}`,
       html: `
         <h2>Price Change Alert!</h2>
@@ -28,9 +27,9 @@ const transporter = nodemailer.createTransport({
     };
 
     await transporter.sendMail(mailOptions);
-    console.log('Price change notification email sent successfully');
+    console.log("Price change notification email sent successfully");
   } catch (err) {
-    console.error('Error sending price change email:', err);
+    console.error("Error sending price change email:", err);
     throw err;
   }
-}; 
+};
